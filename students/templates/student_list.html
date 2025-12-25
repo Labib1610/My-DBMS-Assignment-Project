@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Student Manager{% endblock %}
+
+{% block content %}
+<div class="dashboard-header fade-in">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h1 class="dashboard-title">
+                <span class="material-icons align-middle" style="font-size: 2rem;">dashboard</span>
+                Student Dashboard
+            </h1>
+            <p class="dashboard-subtitle">Manage and track student records efficiently</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'student_create' %}" class="btn btn-success btn-lg me-2">
+                <span class="material-icons align-middle">add_circle</span> Add Student
+            </a>
+            <a href="{% url 'export_csv' %}" class="btn btn-primary btn-lg">
+                <span class="material-icons align-middle">download</span> Export CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-row fade-in">
+    <div class="stats-card stat-card-1">
+        <h3>{{ stats.total|default:0 }}</h3>
+        <p><span class="material-icons align-middle">people</span> Total Students</p>
+    </div>
+    <div class="stats-card stat-card-2">
+        <h3>{{ stats.avg_gpa|floatformat:2|default:"0.00" }}</h3>
+        <p><span class="material-icons align-middle">trending_up</span> Average GPA</p>
+    </div>
+    <div class="stats-card stat-card-3">
+        <h3>{{ stats.excellent|default:0 }}</h3>
+        <p><span class="material-icons align-middle">star</span> Excellent (≥3.5)</p>
+    </div>
+    <div class="stats-card stat-card-4">
+        <h3>{{ stats.good|default:0 }}</h3>
+        <p><span class="material-icons align-middle">thumb_up</span> Good (≥3.0)</p>
+    </div>
+</div>
+
+<!-- Search Section -->
+<div class="search-section fade-in">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-10">
+            <label class="form-label fw-bold">
+                <span class="material-icons align-middle">search</span> Search Students
+            </label>
+            <input type="text" name="q" class="form-control" 
+                   placeholder="Search by First Name, Last Name, or Email..." 
+                   value="{{ query|default:'' }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <span class="material-icons align-middle">search</span> Search
+            </button>
+        </div>
+        {% if query %}
+        <div class="col-12">
+            <a href="{% url 'student_list' %}" class="btn btn-sm btn-outline-secondary">
+                <span class="material-icons align-middle" style="font-size: 16px;">clear</span> Clear Search
+            </a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Student Table -->
+<div class="table-container fade-in">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>
+                    <a href="?sort={% if sort_by == 'first_name' %}-{% endif %}first_name{% if query %}&q={{ query }}{% endif %}" 
+                       class="text-white text-decoration-none">
+                        First Name 
+                        {% if sort_by == 'first_name' %}
+                            <span class="material-icons sort-icon">arrow_upward</span>
+                        {% elif sort_by == '-first_name' %}
+                            <span class="material-icons sort-icon">arrow_downward</span>
+                        {% else %}
+                            <span class="material-icons sort-icon">unfold_more</span>
+                        {% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort={% if sort_by == 'last_name' %}-{% endif %}last_name{% if query %}&q={{ query }}{% endif %}" 
+                       class="text-white text-decoration-none">
+                        Last Name
+                        {% if sort_by == 'last_name' %}
+                            <span class="material-icons sort-icon">arrow_upward</span>
+                        {% elif sort_by == '-last_name' %}
+                            <span class="material-icons sort-icon">arrow_downward</span>
+                        {% else %}
+                            <span class="material-icons sort-icon">unfold_more</span>
+                        {% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort={% if sort_by == 'email' %}-{% endif %}email{% if query %}&q={{ query }}{% endif %}" 
+                       class="text-white text-decoration-none">
+                        Email
+                        {% if sort_by == 'email' %}
+                            <span class="material-icons sort-icon">arrow_upward</span>
+                        {% elif sort_by == '-email' %}
+                            <span class="material-icons sort-icon">arrow_downward</span>
+                        {% else %}
+                            <span class="material-icons sort-icon">unfold_more</span>
+                        {% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort={% if sort_by == 'gpa' %}-{% endif %}gpa{% if query %}&q={{ query }}{% endif %}" 
+                       class="text-white text-decoration-none">
+                        GPA
+                        {% if sort_by == 'gpa' %}
+                            <span class="material-icons sort-icon">arrow_upward</span>
+                        {% elif sort_by == '-gpa' %}
+                            <span class="material-icons sort-icon">arrow_downward</span>
+                        {% else %}
+                            <span class="material-icons sort-icon">unfold_more</span>
+                        {% endif %}
+                    </a>
+                </th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td><strong>{{ student.first_name }}</strong></td>
+                <td><strong>{{ student.last_name }}</strong></td>
+                <td>{{ student.email }}</td>
+                <td>
+                    <span class="badge gpa-badge {% if student.gpa >= 3.5 %}bg-success{% elif student.gpa >= 3.0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                        {{ student.gpa }}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="action-buttons">
+                        <a href="{% url 'student_detail' student.id %}" class="btn btn-sm btn-info text-white" title="View Details">
+                            <span class="material-icons" style="font-size: 16px;">visibility</span>
+                        </a>
+                        <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-primary" title="Edit">
+                            <span class="material-icons" style="font-size: 16px;">edit</span>
+                        </a>
+                        <a href="{% url 'student_delete' student.id %}" class="btn btn-sm btn-danger" title="Delete">
+                            <span class="material-icons" style="font-size: 16px;">delete</span>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-state">
+                    <div>
+                        <span class="material-icons">inbox</span>
+                        <h5>No Students Found</h5>
+                        <p>{% if query %}No students match your search criteria.{% else %}Start by adding your first student!{% endif %}</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="text-center mt-4 text-muted">
+    <small>Showing {{ students|length }} student{{ students|length|pluralize }}</small>
+</div>
+{% endblock %}

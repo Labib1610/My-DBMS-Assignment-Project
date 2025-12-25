@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Student Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5 fade-in">
+    <div class="col-md-6 col-lg-5">
+        <div class="auth-card">
+            <div class="card-header">
+                <span class="material-icons" style="font-size: 3rem;">person_add</span>
+                <h4>Create Account</h4>
+                <p class="mb-0">Join our student management system</p>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <span class="material-icons align-middle" style="font-size: 18px;">
+                                {% if 'username' in field.name %}person
+                                {% elif 'password' in field.name %}lock
+                                {% else %}info
+                                {% endif %}
+                            </span>
+                            {{ field.label }}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <small class="form-text text-muted d-block mt-1">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small mt-1">
+                            <span class="material-icons align-middle" style="font-size: 14px;">error</span>
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn btn-success w-100 btn-lg mb-3">
+                        <span class="material-icons align-middle">how_to_reg</span>
+                        Register
+                    </button>
+                </form>
+                <div class="text-center">
+                    <p class="text-muted mb-0">Already have an account? 
+                        <a href="{% url 'login' %}" class="fw-bold text-decoration-none">Login</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input, select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    input:focus, select:focus {
+        border-color: var(--primary-color, #4361ee);
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+    }
+    ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    ul li {
+        padding: 0.25rem 0;
+    }
+</style>
+{% endblock %}

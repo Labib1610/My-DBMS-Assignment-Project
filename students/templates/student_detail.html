@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.first_name }} {{ student.last_name }} - Student Details{% endblock %}
+
+{% block content %}
+<div class="student-detail-card fade-in">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            {{ student.first_name|first }}{{ student.last_name|first }}
+        </div>
+        <h2>{{ student.first_name }} {{ student.last_name }}</h2>
+        <p>Student ID: #{{ student.id }}</p>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="info-row row">
+                <div class="col-md-4 info-label">
+                    <span class="material-icons align-middle">badge</span> First Name
+                </div>
+                <div class="col-md-8 info-value">
+                    <strong>{{ student.first_name }}</strong>
+                </div>
+            </div>
+            
+            <div class="info-row row">
+                <div class="col-md-4 info-label">
+                    <span class="material-icons align-middle">badge</span> Last Name
+                </div>
+                <div class="col-md-8 info-value">
+                    <strong>{{ student.last_name }}</strong>
+                </div>
+            </div>
+            
+            <div class="info-row row">
+                <div class="col-md-4 info-label">
+                    <span class="material-icons align-middle">email</span> Email Address
+                </div>
+                <div class="col-md-8 info-value">
+                    <a href="mailto:{{ student.email }}">{{ student.email }}</a>
+                </div>
+            </div>
+            
+            <div class="info-row row">
+                <div class="col-md-4 info-label">
+                    <span class="material-icons align-middle">school</span> GPA Score
+                </div>
+                <div class="col-md-8 info-value">
+                    <span class="badge gpa-badge {% if student.gpa >= 3.5 %}bg-success{% elif student.gpa >= 3.0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                        {{ student.gpa }} / 4.00
+                    </span>
+                    {% if student.gpa >= 3.5 %}
+                        <small class="ms-2 text-success">
+                            <span class="material-icons align-middle" style="font-size: 16px;">emoji_events</span>
+                            Excellent Performance
+                        </small>
+                    {% elif student.gpa >= 3.0 %}
+                        <small class="ms-2 text-warning">
+                            <span class="material-icons align-middle" style="font-size: 16px;">thumb_up</span>
+                            Good Performance
+                        </small>
+                    {% else %}
+                        <small class="ms-2 text-danger">
+                            <span class="material-icons align-middle" style="font-size: 16px;">trending_down</span>
+                            Needs Improvement
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-4 d-flex gap-2 justify-content-center">
+                <a href="{% url 'student_list' %}" class="btn btn-secondary">
+                    <span class="material-icons align-middle">arrow_back</span> Back to List
+                </a>
+                <a href="{% url 'student_update' student.id %}" class="btn btn-primary">
+                    <span class="material-icons align-middle">edit</span> Edit Student
+                </a>
+                <a href="{% url 'student_delete' student.id %}" class="btn btn-danger">
+                    <span class="material-icons align-middle">delete</span> Delete Student
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
