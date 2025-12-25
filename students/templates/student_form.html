@@ -1,78 +1,241 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ title }} - Student Manager{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit Student{% else %}Add New Student{% endif %}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center fade-in">
-    <div class="col-md-8 col-lg-6">
-        <div class="form-card">
-            <div class="text-center mb-4">
-                <h2 class="text-dark">
-                    <span class="material-icons align-middle" style="font-size: 2rem;">
-                        {% if title == 'Add New Student' %}person_add{% else %}edit{% endif %}
-                    </span>
-                    {{ title }}
-                </h2>
-                <p class="text-muted">Fill in the student information below</p>
-            </div>
-            
-            <form method="post">
-                {% csrf_token %}
-                
-                {% for field in form %}
-                <div class="mb-4">
-                    <label class="form-label">
-                        <span class="material-icons align-middle" style="font-size: 18px;">
-                            {% if 'first_name' in field.name %}badge
-                            {% elif 'last_name' in field.name %}badge
-                            {% elif 'email' in field.name %}email
-                            {% elif 'gpa' in field.name %}school
-                            {% else %}info
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 form-card">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h3 class="mb-0">
+                        {% if form.instance.pk %}
+                            <span class="material-icons align-middle">edit</span> Edit Student
+                        {% else %}
+                            <span class="material-icons align-middle">person_add</span> Add New Student
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Personal Information Section -->
+                        <h5 class="mb-3 text-primary">
+                            <span class="material-icons align-middle">person</span> Personal Information
+                        </h5>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <span class="material-icons align-middle" style="font-size: 18px;">person</span>
+                                    First Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.first_name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <span class="material-icons align-middle" style="font-size: 18px;">person</span>
+                                    Last Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.last_name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <span class="material-icons align-middle" style="font-size: 18px;">email</span>
+                                    Email Address <span class="text-danger">*</span>
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.email.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <span class="material-icons align-middle" style="font-size: 18px;">phone</span>
+                                    Phone Number
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.phone.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <span class="material-icons align-middle" style="font-size: 18px;">cake</span>
+                                    Date of Birth
+                                </label>
+                                {{ form.date_of_birth }}
+                                {% if form.date_of_birth.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.date_of_birth.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <span class="material-icons align-middle" style="font-size: 18px;">photo_camera</span>
+                                    Profile Picture
+                                </label>
+                                {{ form.profile_picture }}
+                                {% if form.profile_picture.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.profile_picture.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if form.instance.profile_picture %}
+                                    <div class="mt-2">
+                                        <img src="{{ form.instance.profile_picture.url }}" 
+                                             alt="Current photo" 
+                                             style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <span class="material-icons align-middle" style="font-size: 18px;">home</span>
+                                Address
+                            </label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.address.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
                             {% endif %}
-                        </span>
-                        {{ field.label }}
-                    </label>
-                    {{ field }}
-                    {% if field.help_text %}
-                    <small class="form-text text-muted d-block mt-1">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                    <div class="text-danger small mt-1">
-                        <span class="material-icons align-middle" style="font-size: 14px;">error</span>
-                        {{ error }}
-                    </div>
-                    {% endfor %}
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- Academic Information Section -->
+                        <h5 class="mb-3 text-primary">
+                            <span class="material-icons align-middle">school</span> Academic Information
+                        </h5>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <span class="material-icons align-middle" style="font-size: 18px;">grade</span>
+                                    GPA <span class="text-danger">*</span>
+                                </label>
+                                {{ form.gpa }}
+                                {% if form.gpa.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.gpa.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Enter GPA between 0.0 and 4.0</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <span class="material-icons align-middle" style="font-size: 18px;">event</span>
+                                    Enrollment Date
+                                </label>
+                                {{ form.enrollment_date }}
+                                {% if form.enrollment_date.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.enrollment_date.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'student_list' %}" class="btn btn-secondary btn-lg">
+                                <span class="material-icons align-middle">cancel</span> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <span class="material-icons align-middle">save</span> 
+                                {% if form.instance.pk %}Update{% else %}Create{% endif %} Student
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                {% endfor %}
-
-                <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn btn-success btn-lg">
-                        <span class="material-icons align-middle">save</span>
-                        Save Student
-                    </button>
-                    <a href="{% url 'student_list' %}" class="btn btn-outline-secondary btn-lg">
-                        <span class="material-icons align-middle">cancel</span>
-                        Cancel
-                    </a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    input, select, textarea {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 2px solid #e9ecef;
-        border-radius: 10px;
-        font-size: 1rem;
+    .form-card {
+        animation: slideInUp 0.5s ease-out;
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        padding: 10px 15px;
         transition: all 0.3s ease;
     }
-    input:focus, select:focus, textarea:focus {
-        border-color: var(--primary-color, #4361ee);
-        outline: 0;
-        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #6a11cb;
+        box-shadow: 0 0 0 0.25rem rgba(106, 17, 203, 0.15);
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 </style>
 {% endblock %}

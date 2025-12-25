@@ -2,6 +2,58 @@
 
 {% block title %}Dashboard - Student Manager{% endblock %}
 
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .filter-sidebar {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        max-height: 400px;
+    }
+    .bulk-actions-bar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        display: none;
+    }
+    .bulk-actions-bar.active {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .checkbox-cell {
+        width: 40px;
+    }
+    .pagination-custom {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+    }
+    .pagination-custom .page-link {
+        color: #6a11cb;
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+    .pagination-custom .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-header fade-in">
     <div class="row align-items-center">
@@ -16,9 +68,22 @@
             <a href="{% url 'student_create' %}" class="btn btn-success btn-lg me-2">
                 <span class="material-icons align-middle">add_circle</span> Add Student
             </a>
-            <a href="{% url 'export_csv' %}" class="btn btn-primary btn-lg">
-                <span class="material-icons align-middle">download</span> Export CSV
-            </a>
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary btn-lg dropdown-toggle" data-bs-toggle="dropdown">
+                    <span class="material-icons align-middle">more_vert</span> More
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'export_csv' %}">
+                        <span class="material-icons align-middle">download</span> Export All CSV
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'import_csv' %}">
+                        <span class="material-icons align-middle">upload</span> Import CSV
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'print_student_list' %}">
+                        <span class="material-icons align-middle">print</span> Print List
+                    </a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -43,133 +108,330 @@
     </div>
 </div>
 
-<!-- Search Section -->
-<div class="search-section fade-in">
-    <form method="get" class="row g-3 align-items-end">
-        <div class="col-md-10">
-            <label class="form-label fw-bold">
-                <span class="material-icons align-middle">search</span> Search Students
-            </label>
-            <input type="text" name="q" class="form-control" 
-                   placeholder="Search by First Name, Last Name, or Email..." 
-                   value="{{ query|default:'' }}">
+<!-- Performance Chart -->
+<div class="chart-container fade-in">
+    <h5 class="mb-3"><span class="material-icons align-middle">bar_chart</span> Performance Distribution</h5>
+    <canvas id="performanceChart" style="max-height: 300px;"></canvas>
+</div>
+
+<div class="row">
+    <!-- Filter Sidebar -->
+    <div class="col-md-3">
+        <div class="filter-sidebar fade-in">
+            <h5 class="mb-3"><span class="material-icons align-middle">filter_list</span> Filters</h5>
+            <form method="get" id="filterForm">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Search</label>
+                    <input type="text" name="q" class="form-control" 
+                           placeholder="Name or email..." 
+                           value="{{ request.GET.q }}">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Min GPA</label>
+                    <input type="number" name="min_gpa" class="form-control" 
+                           step="0.01" min="0" max="4" 
+                           value="{{ request.GET.min_gpa }}"
+                           placeholder="0.00">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Max GPA</label>
+                    <input type="number" name="max_gpa" class="form-control" 
+                           step="0.01" min="0" max="4" 
+                           value="{{ request.GET.max_gpa }}"
+                           placeholder="4.00">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Performance Level</label>
+                    <select name="performance" class="form-select">
+                        <option value="">All</option>
+                        <option value="Excellent" {% if request.GET.performance == 'Excellent' %}selected{% endif %}>Excellent</option>
+                        <option value="Good" {% if request.GET.performance == 'Good' %}selected{% endif %}>Good</option>
+                        <option value="Average" {% if request.GET.performance == 'Average' %}selected{% endif %}>Average</option>
+                        <option value="Poor" {% if request.GET.performance == 'Poor' %}selected{% endif %}>Poor</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 mb-2">
+                    <span class="material-icons align-middle">search</span> Apply
+                </button>
+                <a href="{% url 'student_list' %}" class="btn btn-outline-secondary w-100">
+                    <span class="material-icons align-middle">clear</span> Clear
+                </a>
+            </form>
+            
+            {% if recent_activity %}
+            <hr class="my-4">
+            <h6 class="mb-3"><span class="material-icons align-middle">history</span> Recent Activity</h6>
+            <div class="list-group list-group-flush">
+                {% for student in recent_activity %}
+                <a href="{% url 'student_detail' student.id %}" 
+                   class="list-group-item list-group-item-action border-0 px-0 py-2">
+                    <small class="d-block text-truncate">{{ student.full_name }}</small>
+                    <small class="text-muted">{{ student.created_at|timesince }} ago</small>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">
-                <span class="material-icons align-middle">search</span> Search
-            </button>
+    </div>
+    
+    <!-- Student Table -->
+    <div class="col-md-9">
+        <!-- Bulk Actions Bar -->
+        <div class="bulk-actions-bar" id="bulkActionsBar">
+            <div>
+                <span id="selectedCount">0</span> student(s) selected
+            </div>
+            <div>
+                <button type="button" class="btn btn-light btn-sm me-2" onclick="bulkExport()">
+                    <span class="material-icons align-middle" style="font-size: 16px;">download</span> Export Selected
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="bulkDelete()">
+                    <span class="material-icons align-middle" style="font-size: 16px;">delete</span> Delete Selected
+                </button>
+            </div>
         </div>
-        {% if query %}
-        <div class="col-12">
-            <a href="{% url 'student_list' %}" class="btn btn-sm btn-outline-secondary">
-                <span class="material-icons align-middle" style="font-size: 16px;">clear</span> Clear Search
-            </a>
+        
+        <div class="table-container fade-in">
+            <form id="bulkForm" method="post">
+                {% csrf_token %}
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'first_name' %}-{% endif %}first_name{{ filter_params }}" 
+                                   class="text-white text-decoration-none">
+                                    First Name 
+                                    {% if sort_by == 'first_name' %}
+                                        <span class="material-icons sort-icon">arrow_upward</span>
+                                    {% elif sort_by == '-first_name' %}
+                                        <span class="material-icons sort-icon">arrow_downward</span>
+                                    {% else %}
+                                        <span class="material-icons sort-icon">unfold_more</span>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'last_name' %}-{% endif %}last_name{{ filter_params }}" 
+                                   class="text-white text-decoration-none">
+                                    Last Name
+                                    {% if sort_by == 'last_name' %}
+                                        <span class="material-icons sort-icon">arrow_upward</span>
+                                    {% elif sort_by == '-last_name' %}
+                                        <span class="material-icons sort-icon">arrow_downward</span>
+                                    {% else %}
+                                        <span class="material-icons sort-icon">unfold_more</span>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>Email</th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'gpa' %}-{% endif %}gpa{{ filter_params }}" 
+                                   class="text-white text-decoration-none">
+                                    GPA
+                                    {% if sort_by == 'gpa' %}
+                                        <span class="material-icons sort-icon">arrow_upward</span>
+                                    {% elif sort_by == '-gpa' %}
+                                        <span class="material-icons sort-icon">arrow_downward</span>
+                                    {% else %}
+                                        <span class="material-icons sort-icon">unfold_more</span>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td class="checkbox-cell">
+                                <input type="checkbox" name="student_ids" value="{{ student.id }}" 
+                                       class="form-check-input student-checkbox">
+                            </td>
+                            <td><strong>{{ student.first_name }}</strong></td>
+                            <td><strong>{{ student.last_name }}</strong></td>
+                            <td>{{ student.email }}</td>
+                            <td>
+                                <span class="badge gpa-badge {% if student.gpa >= 3.5 %}bg-success{% elif student.gpa >= 3.0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ student.gpa }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <a href="{% url 'student_detail' student.id %}" class="btn btn-sm btn-info text-white" title="View Details">
+                                        <span class="material-icons" style="font-size: 16px;">visibility</span>
+                                    </a>
+                                    <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-primary" title="Edit">
+                                        <span class="material-icons" style="font-size: 16px;">edit</span>
+                                    </a>
+                                    <a href="{% url 'student_delete' student.id %}" class="btn btn-sm btn-danger" title="Delete">
+                                        <span class="material-icons" style="font-size: 16px;">delete</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <div>
+                                    <span class="material-icons">inbox</span>
+                                    <h5>No Students Found</h5>
+                                    <p>{% if request.GET.q or request.GET.min_gpa or request.GET.max_gpa or request.GET.performance %}No students match your filters.{% else %}Start by adding your first student!{% endif %}</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Student list pagination">
+            <ul class="pagination pagination-custom">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{{ filter_params }}{{ sort_params }}">
+                            <span class="material-icons" style="font-size: 18px;">first_page</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ filter_params }}{{ sort_params }}">
+                            <span class="material-icons" style="font-size: 18px;">chevron_left</span>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}{{ filter_params }}{{ sort_params }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ filter_params }}{{ sort_params }}">
+                            <span class="material-icons" style="font-size: 18px;">chevron_right</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{{ filter_params }}{{ sort_params }}">
+                            <span class="material-icons" style="font-size: 18px;">last_page</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        
+        <div class="text-center mt-3 text-muted">
+            <small>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} student{{ page_obj.paginator.count|pluralize }}</small>
+        </div>
+        {% else %}
+        <div class="text-center mt-4 text-muted">
+            <small>Showing {{ students|length }} student{{ students|length|pluralize }}</small>
         </div>
         {% endif %}
-    </form>
+    </div>
 </div>
 
-<!-- Student Table -->
-<div class="table-container fade-in">
-    <table class="table table-hover mb-0">
-        <thead>
-            <tr>
-                <th>
-                    <a href="?sort={% if sort_by == 'first_name' %}-{% endif %}first_name{% if query %}&q={{ query }}{% endif %}" 
-                       class="text-white text-decoration-none">
-                        First Name 
-                        {% if sort_by == 'first_name' %}
-                            <span class="material-icons sort-icon">arrow_upward</span>
-                        {% elif sort_by == '-first_name' %}
-                            <span class="material-icons sort-icon">arrow_downward</span>
-                        {% else %}
-                            <span class="material-icons sort-icon">unfold_more</span>
-                        {% endif %}
-                    </a>
-                </th>
-                <th>
-                    <a href="?sort={% if sort_by == 'last_name' %}-{% endif %}last_name{% if query %}&q={{ query }}{% endif %}" 
-                       class="text-white text-decoration-none">
-                        Last Name
-                        {% if sort_by == 'last_name' %}
-                            <span class="material-icons sort-icon">arrow_upward</span>
-                        {% elif sort_by == '-last_name' %}
-                            <span class="material-icons sort-icon">arrow_downward</span>
-                        {% else %}
-                            <span class="material-icons sort-icon">unfold_more</span>
-                        {% endif %}
-                    </a>
-                </th>
-                <th>
-                    <a href="?sort={% if sort_by == 'email' %}-{% endif %}email{% if query %}&q={{ query }}{% endif %}" 
-                       class="text-white text-decoration-none">
-                        Email
-                        {% if sort_by == 'email' %}
-                            <span class="material-icons sort-icon">arrow_upward</span>
-                        {% elif sort_by == '-email' %}
-                            <span class="material-icons sort-icon">arrow_downward</span>
-                        {% else %}
-                            <span class="material-icons sort-icon">unfold_more</span>
-                        {% endif %}
-                    </a>
-                </th>
-                <th>
-                    <a href="?sort={% if sort_by == 'gpa' %}-{% endif %}gpa{% if query %}&q={{ query }}{% endif %}" 
-                       class="text-white text-decoration-none">
-                        GPA
-                        {% if sort_by == 'gpa' %}
-                            <span class="material-icons sort-icon">arrow_upward</span>
-                        {% elif sort_by == '-gpa' %}
-                            <span class="material-icons sort-icon">arrow_downward</span>
-                        {% else %}
-                            <span class="material-icons sort-icon">unfold_more</span>
-                        {% endif %}
-                    </a>
-                </th>
-                <th class="text-center">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student in students %}
-            <tr>
-                <td><strong>{{ student.first_name }}</strong></td>
-                <td><strong>{{ student.last_name }}</strong></td>
-                <td>{{ student.email }}</td>
-                <td>
-                    <span class="badge gpa-badge {% if student.gpa >= 3.5 %}bg-success{% elif student.gpa >= 3.0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
-                        {{ student.gpa }}
-                    </span>
-                </td>
-                <td class="text-center">
-                    <div class="action-buttons">
-                        <a href="{% url 'student_detail' student.id %}" class="btn btn-sm btn-info text-white" title="View Details">
-                            <span class="material-icons" style="font-size: 16px;">visibility</span>
-                        </a>
-                        <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-primary" title="Edit">
-                            <span class="material-icons" style="font-size: 16px;">edit</span>
-                        </a>
-                        <a href="{% url 'student_delete' student.id %}" class="btn btn-sm btn-danger" title="Delete">
-                            <span class="material-icons" style="font-size: 16px;">delete</span>
-                        </a>
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="empty-state">
-                    <div>
-                        <span class="material-icons">inbox</span>
-                        <h5>No Students Found</h5>
-                        <p>{% if query %}No students match your search criteria.{% else %}Start by adding your first student!{% endif %}</p>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<script>
+// Chart.js - Performance Distribution
+fetch("{% url 'chart_data' %}")
+    .then(response => response.json())
+    .then(data => {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Number of Students',
+                    data: data.values,
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',   // Excellent - Green
+                        'rgba(23, 162, 184, 0.8)',  // Good - Cyan
+                        'rgba(255, 193, 7, 0.8)',   // Average - Yellow
+                        'rgba(220, 53, 69, 0.8)'    // Poor - Red
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(23, 162, 184, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    });
 
-<div class="text-center mt-4 text-muted">
-    <small>Showing {{ students|length }} student{{ students|length|pluralize }}</small>
-</div>
+// Bulk Operations
+const selectAllCheckbox = document.getElementById('selectAll');
+const studentCheckboxes = document.querySelectorAll('.student-checkbox');
+const bulkActionsBar = document.getElementById('bulkActionsBar');
+const selectedCountSpan = document.getElementById('selectedCount');
+
+function updateBulkActions() {
+    const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
+    selectedCountSpan.textContent = checkedBoxes.length;
+    
+    if (checkedBoxes.length > 0) {
+        bulkActionsBar.classList.add('active');
+    } else {
+        bulkActionsBar.classList.remove('active');
+    }
+}
+
+selectAllCheckbox.addEventListener('change', function() {
+    studentCheckboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+    updateBulkActions();
+});
+
+studentCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkActions);
+});
+
+function bulkExport() {
+    const form = document.getElementById('bulkForm');
+    form.action = "{% url 'bulk_export' %}";
+    form.submit();
+}
+
+function bulkDelete() {
+    const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
+    if (confirm(`Are you sure you want to delete ${checkedCount} student(s)? This action cannot be undone.`)) {
+        const form = document.getElementById('bulkForm');
+        form.action = "{% url 'bulk_delete' %}";
+        form.submit();
+    }
+}
+</script>
 {% endblock %}

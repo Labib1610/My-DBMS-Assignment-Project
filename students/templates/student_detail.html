@@ -1,85 +1,350 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ student.first_name }} {{ student.last_name }} - Student Details{% endblock %}
+{% block title %}{{ student.full_name }} - Student Details{% endblock %}
 
 {% block content %}
-<div class="student-detail-card fade-in">
-    <div class="profile-header">
-        <div class="profile-avatar">
-            {{ student.first_name|first }}{{ student.last_name|first }}
-        </div>
-        <h2>{{ student.first_name }} {{ student.last_name }}</h2>
-        <p>Student ID: #{{ student.id }}</p>
-    </div>
-    
+<div class="container py-5">
     <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="info-row row">
-                <div class="col-md-4 info-label">
-                    <span class="material-icons align-middle">badge</span> First Name
-                </div>
-                <div class="col-md-8 info-value">
-                    <strong>{{ student.first_name }}</strong>
-                </div>
-            </div>
-            
-            <div class="info-row row">
-                <div class="col-md-4 info-label">
-                    <span class="material-icons align-middle">badge</span> Last Name
-                </div>
-                <div class="col-md-8 info-value">
-                    <strong>{{ student.last_name }}</strong>
-                </div>
-            </div>
-            
-            <div class="info-row row">
-                <div class="col-md-4 info-label">
-                    <span class="material-icons align-middle">email</span> Email Address
-                </div>
-                <div class="col-md-8 info-value">
-                    <a href="mailto:{{ student.email }}">{{ student.email }}</a>
-                </div>
-            </div>
-            
-            <div class="info-row row">
-                <div class="col-md-4 info-label">
-                    <span class="material-icons align-middle">school</span> GPA Score
-                </div>
-                <div class="col-md-8 info-value">
-                    <span class="badge gpa-badge {% if student.gpa >= 3.5 %}bg-success{% elif student.gpa >= 3.0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
-                        {{ student.gpa }} / 4.00
-                    </span>
-                    {% if student.gpa >= 3.5 %}
-                        <small class="ms-2 text-success">
-                            <span class="material-icons align-middle" style="font-size: 16px;">emoji_events</span>
-                            Excellent Performance
-                        </small>
-                    {% elif student.gpa >= 3.0 %}
-                        <small class="ms-2 text-warning">
-                            <span class="material-icons align-middle" style="font-size: 16px;">thumb_up</span>
-                            Good Performance
-                        </small>
+        <!-- Profile Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-body text-center p-4">
+                    {% if student.profile_picture %}
+                        <img src="{{ student.profile_picture.url }}" 
+                             alt="{{ student.full_name }}" 
+                             class="profile-photo mb-3">
                     {% else %}
-                        <small class="ms-2 text-danger">
-                            <span class="material-icons align-middle" style="font-size: 16px;">trending_down</span>
-                            Needs Improvement
-                        </small>
+                        <div class="profile-photo-placeholder mb-3">
+                            {{ student.first_name.0 }}{{ student.last_name.0 }}
+                        </div>
                     {% endif %}
+                    
+                    <h3 class="mb-1">{{ student.full_name }}</h3>
+                    <p class="text-muted mb-3">{{ student.email }}</p>
+                    
+                    <div class="mb-3">
+                        <span class="badge performance-badge performance-{{ student.performance_level|lower }}">
+                            {{ student.performance_level }}
+                        </span>
+                    </div>
+                    
+                    <div class="gpa-display mb-4">
+                        <div class="gpa-number">{{ student.gpa }}</div>
+                        <div class="gpa-label">GPA</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'student_update' student.id %}" class="btn btn-primary">
+                            <span class="material-icons align-middle">edit</span> Edit Profile
+                        </a>
+                        <a href="{% url 'send_email' student.id %}" class="btn btn-success">
+                            <span class="material-icons align-middle">email</span> Send Email
+                        </a>
+                        <a href="{% url 'print_student_detail' student.id %}" class="btn btn-info" target="_blank">
+                            <span class="material-icons align-middle">print</span> Print Profile
+                        </a>
+                        <a href="{% url 'student_delete' student.id %}" class="btn btn-danger">
+                            <span class="material-icons align-middle">delete</span> Delete Student
+                        </a>
+                        <a href="{% url 'student_list' %}" class="btn btn-outline-secondary">
+                            <span class="material-icons align-middle">arrow_back</span> Back to List
+                        </a>
+                    </div>
                 </div>
             </div>
-            
-            <div class="mt-4 d-flex gap-2 justify-content-center">
-                <a href="{% url 'student_list' %}" class="btn btn-secondary">
-                    <span class="material-icons align-middle">arrow_back</span> Back to List
-                </a>
-                <a href="{% url 'student_update' student.id %}" class="btn btn-primary">
-                    <span class="material-icons align-middle">edit</span> Edit Student
-                </a>
-                <a href="{% url 'student_delete' student.id %}" class="btn btn-danger">
-                    <span class="material-icons align-middle">delete</span> Delete Student
-                </a>
+        </div>
+        
+        <!-- Details Card -->
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h4 class="mb-0">
+                        <span class="material-icons align-middle">info</span> Student Information
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Personal Information -->
+                    <h5 class="section-title">
+                        <span class="material-icons align-middle">person</span> Personal Information
+                    </h5>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">badge</span> Student ID
+                            </div>
+                            <div class="info-value">#{{ student.id }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">person</span> First Name
+                            </div>
+                            <div class="info-value">{{ student.first_name }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">person</span> Last Name
+                            </div>
+                            <div class="info-value">{{ student.last_name }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">email</span> Email
+                            </div>
+                            <div class="info-value">
+                                <a href="mailto:{{ student.email }}">{{ student.email }}</a>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">phone</span> Phone
+                            </div>
+                            <div class="info-value">
+                                {% if student.phone %}
+                                    <a href="tel:{{ student.phone }}">{{ student.phone }}</a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">cake</span> Date of Birth
+                            </div>
+                            <div class="info-value">
+                                {{ student.date_of_birth|date:"F d, Y"|default:"Not provided" }}
+                            </div>
+                        </div>
+                        
+                        <div class="info-item full-width">
+                            <div class="info-label">
+                                <span class="material-icons">home</span> Address
+                            </div>
+                            <div class="info-value">
+                                {{ student.address|default:"Not provided" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Academic Information -->
+                    <h5 class="section-title">
+                        <span class="material-icons align-middle">school</span> Academic Information
+                    </h5>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">grade</span> GPA
+                            </div>
+                            <div class="info-value">
+                                <strong>{{ student.gpa }}</strong> / 4.0
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">trending_up</span> Performance Level
+                            </div>
+                            <div class="info-value">
+                                <span class="badge performance-badge performance-{{ student.performance_level|lower }}">
+                                    {{ student.performance_level }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">event</span> Enrollment Date
+                            </div>
+                            <div class="info-value">
+                                {{ student.enrollment_date|date:"F d, Y"|default:"Not provided" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Record Information -->
+                    <h5 class="section-title">
+                        <span class="material-icons align-middle">history</span> Record Information
+                    </h5>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">add_circle</span> Created At
+                            </div>
+                            <div class="info-value">
+                                {{ student.created_at|date:"F d, Y - g:i A" }}
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <span class="material-icons">update</span> Last Updated
+                            </div>
+                            <div class="info-value">
+                                {{ student.updated_at|date:"F d, Y - g:i A" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .profile-photo {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid #6a11cb;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .profile-photo-placeholder {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 64px;
+        font-weight: bold;
+        margin: 0 auto;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .gpa-display {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .gpa-number {
+        font-size: 48px;
+        font-weight: bold;
+        line-height: 1;
+    }
+    
+    .gpa-label {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0.9;
+    }
+    
+    .performance-badge {
+        font-size: 16px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .performance-excellent {
+        background: #28a745;
+        color: white;
+    }
+    
+    .performance-good {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .performance-average {
+        background: #ffc107;
+        color: #333;
+    }
+    
+    .performance-poor {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .section-title {
+        color: #6a11cb;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .info-item {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #6a11cb;
+    }
+    
+    .info-item.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .info-label {
+        font-size: 13px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .info-label .material-icons {
+        font-size: 16px;
+    }
+    
+    .info-value {
+        font-size: 16px;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    .info-value a {
+        color: #6a11cb;
+        text-decoration: none;
+    }
+    
+    .info-value a:hover {
+        text-decoration: underline;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card {
+        animation: fadeIn 0.5s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
 {% endblock %}

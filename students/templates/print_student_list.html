@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Student List - Print View</title>
+    <style>
+        @page { size: landscape; margin: 1cm; }
+        body { font-family: Arial, sans-serif; font-size: 11pt; }
+        h1 { text-align: center; color: #6a11cb; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background-color: #6a11cb; color: white; padding: 8px; text-align: left; font-weight: bold; }
+        td { border: 1px solid #ddd; padding: 6px; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .performance-excellent { color: #28a745; font-weight: bold; }
+        .performance-good { color: #17a2b8; }
+        .performance-average { color: #ffc107; }
+        .performance-poor { color: #dc3545; }
+        .footer { margin-top: 30px; text-align: center; font-size: 9pt; color: #666; }
+        @media print { 
+            .no-print { display: none !important; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <button class="no-print" onclick="window.print()" style="position: fixed; top: 10px; right: 10px; padding: 10px 20px; background: #6a11cb; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        Print
+    </button>
+
+    <h1>Student Management System</h1>
+    <p class="subtitle">Complete Student List</p>
+
+    {% if stats %}
+    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+        <strong>Statistics:</strong> 
+        Total Students: {{ stats.total }} | 
+        Average GPA: {{ stats.avg_gpa }} | 
+        Excellent: {{ stats.excellent }} | 
+        Good: {{ stats.good }} | 
+        Average: {{ stats.average }} | 
+        Poor: {{ stats.poor }}
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>GPA</th>
+                <th>Performance</th>
+                <th>Enrollment Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ student.full_name }}</td>
+                <td>{{ student.email }}</td>
+                <td>{{ student.phone|default:"N/A" }}</td>
+                <td>{{ student.gpa }}</td>
+                <td class="performance-{{ student.performance_level|lower }}">
+                    {{ student.performance_level }}
+                </td>
+                <td>{{ student.enrollment_date|date:"M d, Y"|default:"N/A" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center;">No students found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Generated on {{ today }} | Student Management System</p>
+    </div>
+
+    <script>
+        // Auto-print on load (optional)
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

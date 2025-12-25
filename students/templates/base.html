@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     {% load static %}
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 
@@ -18,6 +19,11 @@
             </a>
             
             <div class="d-flex text-white align-items-center">
+                <!-- Dark Mode Toggle -->
+                <button id="darkModeToggle" class="btn btn-sm btn-outline-light me-3" title="Toggle Dark Mode">
+                    <span class="material-icons align-middle" style="font-size: 16px;" id="darkModeIcon">dark_mode</span>
+                </button>
+                
                 {% if user.is_authenticated %}
                     <span class="me-3">Welcome, <strong>{{ user.username }}</strong></span>
                     
@@ -75,5 +81,32 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Dark Mode Script -->
+    <script>
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const body = document.body;
+        
+        // Check for saved dark mode preference
+        const darkMode = localStorage.getItem('darkMode');
+        if (darkMode === 'enabled') {
+            body.classList.add('dark-mode');
+            darkModeIcon.textContent = 'light_mode';
+        }
+        
+        // Toggle dark mode
+        darkModeToggle.addEventListener('click', function() {
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('darkMode', 'enabled');
+                darkModeIcon.textContent = 'light_mode';
+            } else {
+                localStorage.setItem('darkMode', null);
+                darkModeIcon.textContent = 'dark_mode';
+            }
+        });
+    </script>
 </body>
 </html>
